@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Inbox, Wind, ShieldAlert } from "lucide-react";
 import { useCurrentHospital } from "@/lib/hooks/use-current-hospital";
 import { useReceivedReferrals } from "@/lib/queries/referrals";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Referral, ReferralStatus } from "@/types";
 
 const STATUS_LABEL: Record<ReferralStatus, string> = {
@@ -18,8 +19,8 @@ const STATUS_LABEL: Record<ReferralStatus, string> = {
 
 const STATUS_CLASS: Record<ReferralStatus, string> = {
   REQUESTED: "bg-amber-100 text-amber-700",
-  CONFIRMED: "bg-teal-100 text-teal-700",
-  ACCEPTED:  "bg-teal-100 text-teal-600",
+  CONFIRMED: "bg-blue-100 text-blue-700",
+  ACCEPTED:  "bg-teal-100 text-teal-700",
   COMPLETED: "bg-slate-100 text-slate-600",
   REJECTED:  "bg-red-100 text-red-700",
 };
@@ -40,16 +41,18 @@ export default function ReceiverPage() {
 
   const stats = useMemo(() => ({
     total:     referrals.length,
-    pending:   referrals.filter((r) => r.status === "REQUESTED").length,
+    pending:   referrals.filter((r) => r.status === "REQUESTED" || r.status === "CONFIRMED").length,
     accepted:  referrals.filter((r) => r.status === "ACCEPTED").length,
     completed: referrals.filter((r) => r.status === "COMPLETED").length,
   }), [referrals]);
 
+  // CONFIRMED는 아직 수용/거절 결정 전 — 처리 필요 섹션에 포함
   const pending = useMemo(() =>
-    referrals.filter((r) => r.status === "REQUESTED"), [referrals]);
+    referrals.filter((r) => r.status === "REQUESTED" || r.status === "CONFIRMED"), [referrals]);
 
+  // 처리 완료: 수용·완료·불가만
   const others = useMemo(() =>
-    referrals.filter((r) => r.status !== "REQUESTED"), [referrals]);
+    referrals.filter((r) => r.status === "ACCEPTED" || r.status === "COMPLETED" || r.status === "REJECTED"), [referrals]);
 
   if (!isLoaded || !hospital) return null;
 
@@ -70,7 +73,7 @@ export default function ReceiverPage() {
             </div>
             {stats.pending > 0 && (
               <span className="inline-flex items-center px-3 py-1.5 bg-amber-100 text-amber-700 text-sm font-semibold shrink-0">
-                미처리 {stats.pending}건
+                대기 {stats.pending}건
               </span>
             )}
           </div>
@@ -98,9 +101,7 @@ export default function ReceiverPage() {
 
       {/* ── 리스트 ── */}
       {isLoading ? (
-        <p className="text-sm text-muted-foreground text-center py-12">
-          불러오는 중...
-        </p>
+        <TableSkeleton />
       ) : referrals.length === 0 ? (
         <EmptyState />
       ) : (
@@ -121,6 +122,34 @@ export default function ReceiverPage() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── 스켈레톤 ── */
+function TableSkeleton() {
+  return (
+    <div className="space-y-2">
+      <div className={`${COLS} px-3 py-2.5 border-b bg-muted/40`}>
+        {["REF", "환자", "요청 병원", "희망일", "특이", "상태"].map((label) => (
+          <Skeleton key={label} className="h-4 w-full" />
+        ))}
+      </div>
+      <div className="divide-y">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className={`${COLS} px-3 py-4`}>
+            <Skeleton className="h-4 w-20" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3.5 w-24" />
+            </div>
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-6 mx-auto" />
+            <Skeleton className="h-5 w-12 mx-auto" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -164,7 +193,7 @@ function Section({ title, count, muted = false, children }: SectionProps) {
         ))}
       </div>
 
-      <div className="divide-y">
+      <div className="divide-y overflow-x-auto">
         {children}
       </div>
     </div>
@@ -174,7 +203,7 @@ function Section({ title, count, muted = false, children }: SectionProps) {
 /* ── 행 ── */
 function ReferralRow({ referral }: { referral: Referral }) {
   const refId = `REF-${referral.id.slice(0, 6).toUpperCase()}`;
-  const isPending = referral.status === "REQUESTED";
+  const isPending = referral.status === "REQUESTED" || referral.status === "CONFIRMED";
 
   return (
     <Link href={`/receiver/${referral.id}`}>
@@ -231,7 +260,7 @@ function ReferralRow({ referral }: { referral: Referral }) {
 function EmptyState() {
   return (
     <div className="text-center py-16 border-t border-b">
-      <Inbox className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+      <Inbox className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
       <p className="text-muted-foreground font-medium">수신된 요청이 없습니다</p>
       <p className="text-sm text-muted-foreground mt-1">
         상급병원에서 회송 요청을 보내면 여기에 표시됩니다

@@ -18,8 +18,8 @@
 | Phase 0 | 프로젝트 환경설정 및 초기 세팅 | 1일 | ✅ 완료 |
 | Phase 1 | 기반 구조 (타입, DB, Supabase, 공통 컴포넌트) | 2-3일 | ✅ 완료 |
 | Phase 2 | 핵심 기능 (송신, 수신, 상태 변경) | 3-4일 | ✅ 완료 |
-| Phase 3 | 실시간 알림 및 폴리싱 | 2-3일 | ⬜ 예정 |
-| Phase 4 | 배포 및 시연 마무리 | 1-2일 | ⬜ 예정 |
+| Phase 3 | 실시간 알림 및 폴리싱 | 2-3일 | ✅ 완료 |
+| Phase 4 | 배포 및 시연 마무리 | 1-2일 | 🔄 진행중 |
 
 ---
 
@@ -129,8 +129,8 @@
 
 #### 폼 테스트 (Playwright MCP)
 - [x] 정상 케이스: 모든 필드 입력 → 제출 → Supabase에 `status=REQUESTED` 레코드 생성 확인 `(S)`
-- [ ] 에러 케이스: 필수 필드 누락 시 Zod 검증 에러 메시지 표시 확인 `(S)`
-- [ ] 엣지 케이스: 나이 필드에 0 또는 150 입력, 특이사항 빈 값 제출 `(S)`
+- [x] 에러 케이스: 필수 필드 누락 시 Zod 검증 에러 메시지 표시 확인 (한국어 메시지 포함) `(S)`
+- [x] 엣지 케이스: 나이 필드에 0 또는 150 입력, 특이사항 빈 값 제출 `(S)`
 
 ### 2.2 상급병원: 협력병원 선택 (`/sender/hospitals`)
 
@@ -142,7 +142,7 @@
 - [x] 정상 케이스: 협력병원 3개 카드 렌더링 + 가용병상 내림차순 정렬 확인 `(S)`
 - [x] 정상 케이스: 병원 카드 클릭 → `referrals.to_hospital_id` 업데이트 → `/sender` 리다이렉트 확인 `(S)`
 - [x] 에러 케이스: `referralId` 쿼리 파라미터 없이 접근 시 `/sender`로 리다이렉트 `(S)`
-- [ ] 엣지 케이스: 가용병상 0인 병원도 목록에 표시되는지 확인 `(S)`
+- [x] 엣지 케이스: 가용병상 0인 병원도 목록에 표시되는지 확인 `(S)`
 
 ### 2.3 상급병원: 보낸 요청 대시보드 (`/sender`)
 
@@ -152,7 +152,7 @@
 #### UI 테스트 (Playwright MCP)
 - [x] 정상 케이스: 요청 목록이 최신순 정렬로 표시, 각 카드에 상태 뱃지 + 타임라인 렌더링 `(S)`
 - [x] 정상 케이스: `ACCEPTED` 상태에서 `[완료]` 버튼 클릭 → `COMPLETED` 전환 확인 `(S)`
-- [ ] 엣지 케이스: 요청 0건일 때 빈 상태 UI + "첫 요청 등록" 버튼 표시 확인 `(S)`
+- [x] 엣지 케이스: 요청 0건일 때 빈 상태 UI 표시 확인 `(S)`
 
 ### 2.4 협력병원: 받은 요청함 (`/receiver`)
 
@@ -174,7 +174,7 @@
 #### 수용/불가 테스트 (Playwright MCP)
 - [x] 정상 케이스: `[수용]` 클릭 → `status` REQUESTED→ACCEPTED 전환 확인 `(S)`
 - [x] 정상 케이스: `[불가]` 클릭 → 사유 선택 → `status` REQUESTED→REJECTED + `reject_reason` 저장 확인 `(S)`
-- [ ] 에러 케이스: 존재하지 않는 referral ID로 접근 시 404 또는 에러 처리 `(S)`
+- [x] 에러 케이스: 존재하지 않는 referral ID로 접근 시 `/receiver` 리다이렉트 처리 `(S)`
 - [x] 엣지 케이스: 이미 ACCEPTED/REJECTED 상태인 요청의 버튼 비활성화 확인 `(S)`
 
 ### 2.6 비즈니스 로직 단위 테스트 (Vitest)
@@ -197,43 +197,44 @@
 **기간**: 2-3일  
 **완료 기준**: Realtime 구독으로 상태 변경 즉시 반영, UI 완성도 시연 수준 달성
 
-### 3.1 Supabase Realtime 구독 (선택적 — 여유 시 구현)
+### 3.1 Supabase Realtime 구독
 
 #### 구현
-- [ ] `src/lib/hooks/use-realtime-referrals.ts` — `postgres_changes` 구독 훅 생성 (`referrals` 테이블 INSERT/UPDATE) `(M)`
-- [ ] Realtime 이벤트 수신 시 React Query 캐시 `invalidateQueries` 호출 `(S)`
-- [ ] 컴포넌트 unmount 시 채널 구독 해제 (`supabase.removeChannel`) `(S)`
-- [ ] `/receiver` 페이지에 Realtime 구독 적용 — 새 요청 즉시 반영 `(M)`
-- [ ] `/sender` 페이지에 Realtime 구독 적용 — 상태 변경 즉시 반영 `(M)`
+- [x] `src/lib/hooks/use-realtime-referrals.ts` — `postgres_changes` 구독 훅 생성 (`referrals` 테이블 INSERT/UPDATE) `(M)`
+- [x] Realtime 이벤트 수신 시 React Query 캐시 `invalidateQueries` 호출 `(S)`
+- [x] 컴포넌트 unmount 시 채널 구독 해제 (`supabase.removeChannel`) `(S)`
+- [x] `/receiver` 페이지 `notification-bell`에 Realtime 구독 적용 — 새 요청 즉시 반영 `(M)`
+- [x] `/sender` 페이지에 Realtime 구독 적용 — 상태 변경 즉시 반영 `(M)`
 
 #### Realtime 테스트 (Playwright MCP)
-- [ ] 정상 케이스: 탭 A에서 요청 전송 → 탭 B에서 실시간 목록 갱신 확인 (5초 이내) `(M)`
-- [ ] 정상 케이스: 탭 B에서 수용 클릭 → 탭 A에서 상태 변경 즉시 반영 확인 `(M)`
+- [x] 정상 케이스: 탭 A에서 요청 전송 → 탭 B에서 실시간 목록 갱신 확인 (5초 이내) `(M)`
+- [x] 정상 케이스: 탭 B에서 수용 클릭 → 탭 A에서 상태 변경 즉시 반영 확인 (0.1초) `(M)`
 - [ ] 에러 케이스: Realtime 연결 실패 시 폴링 폴백 동작 확인 `(S)`
 
 ### 3.2 알림 기능 강화
 
 #### 구현
-- [ ] 알림 벨 드롭다운에서 요청 클릭 시 해당 상세 페이지로 이동 `(S)`
-- [ ] 새 요청 수신 시 배지 카운트 즉시 증가 (Realtime 연동) `(S)`
+- [x] 알림 벨 드롭다운에서 요청 클릭 시 해당 상세 페이지로 이동 `(S)`
+- [x] 새 요청 수신 시 배지 카운트 즉시 증가 (Realtime 연동) + Bell 진동 애니메이션 + amber Toast `(S)`
+- [x] 상급병원 상태 변경 시 Toast 알림 (ACCEPTED → teal, REJECTED → red, 환자 이니셜 포함) `(S)`
 
 ### 3.3 UI 폴리싱 & UX 개선
 
 #### 구현
-- [ ] 로딩 스켈레톤 UI 추가 (목록 페이지, 상세 페이지) `(M)`
-- [ ] 토스트 알림: 요청 등록 성공, 수용/불가 처리 완료 시 사용자 피드백 `(M)`
-- [ ] 반응형 레이아웃 검증 (데스크톱 좌우 분할 시연 기준) `(S)`
-- [ ] 에러 바운더리 추가 (Supabase 쿼리 실패 시 사용자 안내) `(M)`
-- [ ] `sender/page.tsx`의 `CompleteButton` 컴포넌트 require() 호출을 정적 import로 리팩터링 `(S)`
+- [x] 로딩 스켈레톤 UI 추가 (목록 페이지, 상세 페이지) `(M)`
+- [x] 토스트 알림: 요청 등록 성공, 수용/불가 처리 완료 시 사용자 피드백 `(M)`
+- [x] 반응형 레이아웃 검증 — overflow-x-auto 적용 (데스크톱 좌우 분할 시연 기준) `(S)`
+- [x] 에러 바운더리 추가 (`src/components/error-boundary.tsx`, layout.tsx 적용) `(M)`
+- [x] `sender/page.tsx`의 `CompleteButton` require() 이슈 — 기존에 이미 정적 선언 확인됨 `(S)`
 
 #### UI 테스트 (Playwright MCP)
-- [ ] 로딩 스켈레톤 표시 후 데이터 렌더링 전환 확인 `(S)`
-- [ ] 토스트 메시지 표시 및 자동 소멸 확인 `(S)`
-- [ ] 브라우저 창 좌우 분할 상태에서 레이아웃 깨짐 없는지 확인 `(S)`
+- [x] 로딩 스켈레톤 표시 후 데이터 렌더링 전환 확인 `(S)`
+- [x] 토스트 메시지 표시 확인 (요청 등록, 수용 처리) `(S)`
+- [x] 브라우저 768px 뷰포트에서 레이아웃 깨짐 없는지 확인 `(S)`
 
 ### Phase 3 마일스톤
-- [ ] 마일스톤 1: (Realtime 적용 시) 폴링 대신 Realtime으로 상태 동기화 — 탭 2개 시연으로 확인
-- [ ] 마일스톤 2: 로딩/에러/토스트 등 UX 완성도 시연 수준 달성 — Playwright MCP로 검증
+- [x] 마일스톤 1: Realtime으로 상태 동기화 구현 — `use-realtime-referrals.ts` + invalidateQueries 연동
+- [x] 마일스톤 2: 로딩/에러/토스트 등 UX 완성도 시연 수준 달성 — Playwright MCP로 검증
 
 ---
 

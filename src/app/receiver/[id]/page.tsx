@@ -14,7 +14,8 @@ import {
   Wind,
   ShieldAlert,
 } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -23,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StatusTimeline } from "@/components/status-timeline";
 import { useCurrentHospital } from "@/lib/hooks/use-current-hospital";
 import { useReferral, useUpdateReferralStatus } from "@/lib/queries/referrals";
@@ -42,8 +44,8 @@ const REJECT_REASONS = [
 
 const STATUS_CLASS: Record<ReferralStatus, string> = {
   REQUESTED: "bg-amber-100 text-amber-700",
-  CONFIRMED: "bg-teal-100 text-teal-700",
-  ACCEPTED:  "bg-teal-100 text-teal-600",
+  CONFIRMED: "bg-blue-100 text-blue-700",
+  ACCEPTED:  "bg-teal-100 text-teal-700",
   COMPLETED: "bg-slate-100 text-slate-600",
   REJECTED:  "bg-red-100 text-red-700",
 };
@@ -88,7 +90,12 @@ export default function ReferralDetailPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [referral?.id]);
 
-  if (!isLoaded || !hospital || isLoading || !referral) return null;
+  if (!isLoaded || !hospital) return null;
+
+  // 로딩 스켈레톤
+  if (isLoading) return <DetailSkeleton />;
+
+  if (!referral) return null;
 
   const isProcessed =
     referral.status === "ACCEPTED" ||
@@ -96,17 +103,48 @@ export default function ReferralDetailPage() {
     referral.status === "COMPLETED";
 
   const handleAccept = async () => {
-    await updateStatus.mutateAsync({ id: referral.id, status: "ACCEPTED" });
-    router.push("/receiver");
+    try {
+      await updateStatus.mutateAsync({ id: referral.id, status: "ACCEPTED" });
+      toast.success("수용 완료되었습니다.", {
+        description: `${referral.patient_initial} 환자 회송을 수용했습니다.`,
+      });
+      router.push("/receiver");
+    } catch {
+      toast.error("처리 중 오류가 발생했습니다.", {
+        description: "잠시 후 다시 시도해주세요.",
+      });
+    }
   };
 
   const handleReject = async () => {
-    await updateStatus.mutateAsync({
-      id: referral.id,
-      status: "REJECTED",
-      rejectReason,
-    });
-    router.push("/receiver");
+    try {
+      await updateStatus.mutateAsync({
+        id: referral.id,
+        status: "REJECTED",
+        rejectReason,
+      });
+      toast.info("불가 처리되었습니다.", {
+        description: `사유: ${rejectReason}`,
+      });
+      router.push("/receiver");
+    } catch {
+      toast.error("처리 중 오류가 발생했습니다.", {
+        description: "잠시 후 다시 시도해주세요.",
+      });
+    }
+  };
+
+  const handleRevert = async () => {
+    try {
+      await updateStatus.mutateAsync({ id: referral.id, status: "CONFIRMED" });
+      toast.success("결정이 취소되었습니다.", {
+        description: "다시 수용 또는 불가를 선택해주세요.",
+      });
+    } catch {
+      toast.error("처리 중 오류가 발생했습니다.", {
+        description: "잠시 후 다시 시도해주세요.",
+      });
+    }
   };
 
   return (
@@ -304,23 +342,100 @@ export default function ReferralDetailPage() {
 
       {/* ── 처리 완료 상태 메시지 ── */}
       {isProcessed && referral.status === "ACCEPTED" && (
-        <div className="flex items-center gap-2 p-4 bg-teal-50 text-teal-700 text-sm">
-          <CheckCircle2 className="h-4 w-4" />
-          수용 완료된 요청입니다.
+        <div className="border border-teal-200 bg-teal-50">
+          <div className="flex items-center gap-2 px-4 py-3 text-teal-700 text-sm">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            수용 완료된 요청입니다.
+          </div>
+          <div className="border-t border-teal-200 px-4 py-2.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground h-auto py-1 px-2 text-sm"
+              onClick={handleRevert}
+              disabled={updateStatus.isPending}
+            >
+              ↩ 결정 취소 (확인됨으로 되돌리기)
+            </Button>
+          </div>
         </div>
       )}
       {isProcessed && referral.status === "COMPLETED" && (
         <div className="flex items-center gap-2 p-4 bg-slate-100 text-slate-600 text-sm">
-          <CheckCircle2 className="h-4 w-4" />
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
           회송이 완료된 요청입니다.
         </div>
       )}
       {isProcessed && referral.status === "REJECTED" && (
-        <div className="flex items-center gap-2 p-4 bg-red-50 text-red-700 text-sm">
-          <XCircle className="h-4 w-4" />
-          불가 처리된 요청입니다.
+        <div className="border border-red-200 bg-red-50">
+          <div className="flex items-center gap-2 px-4 py-3 text-red-700 text-sm">
+            <XCircle className="h-4 w-4 shrink-0" />
+            불가 처리된 요청입니다.
+          </div>
+          <div className="border-t border-red-200 px-4 py-2.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground h-auto py-1 px-2 text-sm"
+              onClick={handleRevert}
+              disabled={updateStatus.isPending}
+            >
+              ↩ 결정 취소 (확인됨으로 되돌리기)
+            </Button>
+          </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── 상세 스켈레톤 ── */
+function DetailSkeleton() {
+  return (
+    <div className="max-w-2xl mx-auto">
+      <div className="-mx-4 mb-8 border-b">
+        <div className="px-6 pt-2 pb-5">
+          <Skeleton className="h-4 w-20 mb-3" />
+          <Skeleton className="h-3.5 w-32 mb-2" />
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <Skeleton className="h-10 w-40 mb-2" />
+              <Skeleton className="h-4 w-56" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-6 pb-6 border-b space-y-4">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-6 w-full" />
+      </div>
+
+      <div className="mb-6 pb-6 border-b space-y-4">
+        <Skeleton className="h-4 w-24" />
+        <div className="grid grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="space-y-1.5">
+              <Skeleton className="h-3.5 w-12" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+          ))}
+        </div>
+        <Skeleton className="h-px w-full" />
+        <div className="grid grid-cols-2 gap-4">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="space-y-1.5">
+              <Skeleton className="h-3.5 w-16" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex gap-3">
+        <Skeleton className="h-10 flex-1" />
+        <Skeleton className="h-10 flex-1" />
+      </div>
     </div>
   );
 }

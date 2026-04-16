@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { HospitalSwitcher } from "@/components/hospital-switcher";
 import { NotificationBell } from "@/components/notification-bell";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -39,7 +40,9 @@ export default function RootLayout({
 
           {/* 본문 */}
           <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
-            {children}
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
           </main>
         </Providers>
       </body>

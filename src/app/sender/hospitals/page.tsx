@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Building2, BedDouble, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,15 @@ import { usePartnerHospitals } from "@/lib/queries/hospitals";
 import { useAssignHospital } from "@/lib/queries/referrals";
 import type { Hospital } from "@/types";
 
-export default function HospitalsPage() {
+export default function HospitalsPageWrapper() {
+  return (
+    <Suspense>
+      <HospitalsPage />
+    </Suspense>
+  );
+}
+
+function HospitalsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const referralId = searchParams.get("referralId");

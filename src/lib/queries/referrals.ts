@@ -56,9 +56,9 @@ export function useReferral(id: string | null) {
           "*, from_hospital:hospitals!from_hospital_id(*), to_hospital:hospitals!to_hospital_id(*)",
         )
         .eq("id", id)
-        .single();
+        .maybeSingle(); // 존재하지 않으면 null 반환 (에러 아님)
       if (error) throw error;
-      return data as Referral;
+      return (data ?? null) as Referral | null;
     },
     enabled: !!id,
     refetchInterval: 5000,
