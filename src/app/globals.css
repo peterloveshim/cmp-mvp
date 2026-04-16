@@ -58,15 +58,15 @@
   --popover-foreground: #0F172A;
   --primary: #0F766E;           /* Teal 700  — CTA, 활성 스텝 */
   --primary-foreground: #F0FDFA;/* Teal 50   — primary 위 텍스트 */
-  --secondary: #64748B;         /* Slate 500 — 보조 버튼 */
+  --secondary: #475569;         /* Slate 600 — 보조 버튼 */
   --secondary-foreground: #ffffff;
-  --muted: #E2E8F0;             /* Slate 200 — 카드 배경, 비활성 */
-  --muted-foreground: #64748B;  /* Slate 500 — 보조 설명 */
-  --accent: #E2E8F0;
+  --muted: #F1F5F9;             /* Slate 100 — 카드 배경, 비활성 */
+  --muted-foreground: #475569;  /* Slate 600 — 보조 설명 */
+  --accent: #F1F5F9;
   --accent-foreground: #0F172A;
   --destructive: #DC2626;       /* Red 600   — REJECTED 상태 */
-  --border: #CBD5E1;            /* Slate 300 — 테이블·카드 경계 */
-  --input: #CBD5E1;
+  --border: #94A3B8;            /* Slate 400 — 테이블·카드 경계 */
+  --input: #94A3B8;
   --ring: #0F766E;
   --chart-1: #0F766E;
   --chart-2: #0D9488;
@@ -78,9 +78,9 @@
   --sidebar-foreground: #0F172A;
   --sidebar-primary: #0F766E;
   --sidebar-primary-foreground: #F0FDFA;
-  --sidebar-accent: #E2E8F0;
+  --sidebar-accent: #F1F5F9;
   --sidebar-accent-foreground: #0F172A;
-  --sidebar-border: #CBD5E1;
+  --sidebar-border: #94A3B8;
   --sidebar-ring: #0F766E;
 }
 

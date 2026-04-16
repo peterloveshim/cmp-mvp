@@ -24,12 +24,12 @@ globs: ["**/*.tsx", "**/*.css"]
 ```css
 --primary:            #0F766E;  /* Teal 700  — 주요 CTA, 활성 스텝 */
 --primary-foreground: #F0FDFA;  /* Teal 50   — primary 위 텍스트 */
---secondary:          #64748B;  /* Slate 500 — 보조 버튼, 라벨 */
+--secondary:          #475569;  /* Slate 600 — 보조 버튼, 라벨 */
 --background:         #F8FAFC;  /* Slate 50  — 전체 배경 */
 --foreground:         #0F172A;  /* Slate 950 — 본문 텍스트 */
---muted:              #E2E8F0;  /* Slate 200 — 카드 배경, 비활성 영역 */
---muted-foreground:   #64748B;  /* Slate 500 — 보조 설명 텍스트 */
---border:             #CBD5E1;  /* Slate 300 — 테이블·카드 경계 */
+--muted:              #F1F5F9;  /* Slate 100 — 카드 배경, 비활성 영역 */
+--muted-foreground:   #475569;  /* Slate 600 — 보조 설명 텍스트 */
+--border:             #94A3B8;  /* Slate 400 — 테이블·카드 경계 */
 --destructive:        #DC2626;  /* Red 600   — REJECTED 상태 */
 --success:            #0D9488;  /* Teal 600  — ACCEPTED/COMPLETED 상태 */
 ```
@@ -45,7 +45,7 @@ globs: ["**/*.tsx", "**/*.css"]
 | `REQUESTED` | 앰버 | `bg-amber-100 text-amber-700` |
 | `CONFIRMED` | primary (틸) | `bg-teal-100 text-teal-700` |
 | `ACCEPTED` | success (틸 600) | `bg-teal-100 text-teal-600` |
-| `COMPLETED` | 슬레이트 (흐릿) | `bg-slate-100 text-slate-500` |
+| `COMPLETED` | 슬레이트 | `bg-slate-100 text-slate-600` |
 | `REJECTED` | destructive (레드) | `bg-red-100 text-red-700` |
 
 ---
@@ -75,7 +75,7 @@ const STATUS_CLASS = {
   REQUESTED:  "bg-amber-100 text-amber-700",
   CONFIRMED:  "bg-teal-100 text-teal-700",
   ACCEPTED:   "bg-teal-100 text-teal-600",
-  COMPLETED:  "bg-slate-100 text-slate-500",
+  COMPLETED:  "bg-slate-100 text-slate-600",
   REJECTED:   "bg-red-100 text-red-700",
 }
 ```
@@ -89,10 +89,88 @@ const STATUS_CLASS = {
 
 - 완료 스텝 원: `bg-primary text-primary-foreground` + 체크 아이콘
 - 현재 스텝 원: `border-2 border-primary bg-primary/10 text-primary`
-- 미도달 스텝 원: `bg-muted border-muted-foreground/30 text-muted-foreground`
+- 미도달 스텝 원: `bg-muted border-muted-foreground/50 text-muted-foreground`
 - 연결선 완료 구간: `bg-primary`
 - 연결선 미도달 구간: `bg-muted`
 - REJECTED: 스텝바 대신 `bg-red-100 text-red-700` 인라인 뱃지로 교체
+
+### 히어로 헤더 (페이지 상단 다크 배너)
+
+리스트 페이지 상단에는 다크 배너로 컨텍스트(병원명·통계)를 표시한다.
+
+- 배경: `bg-slate-900 text-white`
+- 레이아웃 패딩 상쇄(전폭 블리드): `-mx-4` — 좌우 `px-4` 를 취소해 전폭 노출
+- **보더·라운드 없음** — 사각 처리로 단단한 인상 유지
+- 통계 스트립: `border-t border-slate-700` + `divide-x divide-slate-700`
+- 통계 숫자는 상태별 색상 (`text-amber-400` / `text-teal-400` / `text-slate-400` / `text-red-400`)
+
+### 테이블 섹션 패턴 (리스트 페이지)
+
+컬럼 헤더와 행의 그리드 정렬을 공유하는 패턴.
+
+```tsx
+// ✅ 그리드 정의를 상수로 분리 — 헤더와 행에서 동시 참조
+const COLS = "grid grid-cols-[...] gap-4 items-center";
+
+// 섹션 타이틀 — border-b 한 줄만 (bg 없음)
+<div className="flex items-baseline gap-2.5 border-b pb-2">
+  <h2 className="text-sm font-semibold uppercase tracking-wider ...">제목</h2>
+  <span className="text-sm font-bold tabular-nums ...">카운트</span>
+</div>
+
+// 컬럼 헤더 — 옅은 muted 배경 + border-b
+<div className={`${COLS} px-3 py-2.5 border-b bg-muted/40`}>
+  <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">...</span>
+</div>
+
+// 행 — divide-y 로 구분 (border 래퍼 없음)
+<div className="divide-y">
+  {children}
+</div>
+```
+
+- `rounded-xl border` 래퍼로 전체를 감싸는 방식 ❌ — `divide-y` 패턴 사용
+- 행 호버: `hover:bg-muted/30 transition-colors`
+
+### ❌ opacity 변형 금지
+
+`text-muted-foreground/N` 처럼 opacity 를 낮춰 텍스트를 흐리게 만드는 패턴은 **사용 금지**.
+
+```
+❌ text-muted-foreground/60
+❌ text-muted-foreground/70
+❌ text-muted-foreground/40
+❌ text-muted-foreground/50  (텍스트에)
+
+✅ text-muted-foreground     (보조 설명)
+✅ text-foreground           (본문)
+✅ text-slate-700            (값·메타 정보 — L2 계층)
+```
+
+아이콘 등 비텍스트 요소에서 `/50` 정도는 허용하되, 텍스트에는 절대 적용하지 않는다.
+
+---
+
+## 텍스트 계층 구조
+
+페이지 내 정보 우선순위를 3단계로 나눈다.
+
+| 계층 | 용도 | 클래스 | 대비비 (vs white) |
+|---|---|---|---|
+| L1 Primary | 제목, 환자 이니셜, 핵심 값 | `text-foreground` | 15.4:1 |
+| L2 Secondary | 병원명, 날짜, 메타 값 | `text-slate-700` | 8.5:1 |
+| L3 Muted | 그룹 라벨, 힌트, 보조 설명 | `text-muted-foreground` | 5.6:1 |
+
+라벨과 값이 나란히 있을 때는 라벨을 L3, 값을 L2로 구분한다.
+
+```tsx
+// ✅ 라벨(L3) + 값(L2) 분리
+<span className="text-muted-foreground">희망일:</span>
+<span className="text-slate-700">{date}</span>
+
+// ❌ 둘 다 muted-foreground 로 동일 처리 — 계층 없음
+<span className="text-muted-foreground">희망일: {date}</span>
+```
 
 ---
 
@@ -103,7 +181,14 @@ const STATUS_CLASS = {
 - 섹션 제목: `text-base font-semibold`
 - 카드 제목: `text-base font-medium`
 - 보조 텍스트: `text-sm text-muted-foreground`
-- 그룹 레이블: `text-xs font-semibold uppercase tracking-wider text-muted-foreground`
+- 그룹 레이블: `text-sm font-semibold uppercase tracking-wider text-muted-foreground`
+
+### ❌ text-xs 사용 금지
+
+`text-xs` (12px)는 **사용 금지**. 최소 `text-sm` (14px) 이상만 허용한다.
+
+- shadcn/ui 내부(`badge.tsx`, `button.tsx`, `select.tsx` 등) 라이브러리 소스는 예외
+- 직접 작성하는 모든 컴포넌트·페이지에서 `text-xs` 클래스 추가 금지
 
 ---
 
