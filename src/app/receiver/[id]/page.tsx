@@ -45,7 +45,7 @@ const STATUS_CLASS: Record<ReferralStatus, string> = {
   REQUESTED: "bg-amber-100 text-amber-700",
   CONFIRMED: "bg-teal-100 text-teal-700",
   ACCEPTED:  "bg-teal-100 text-teal-600",
-  COMPLETED: "bg-slate-100 text-slate-500",
+  COMPLETED: "bg-slate-100 text-slate-600",
   REJECTED:  "bg-red-100 text-red-700",
 };
 
@@ -113,7 +113,7 @@ export default function ReferralDetailPage() {
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-bold">{referral.patient_initial}</h1>
             <span
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_CLASS[referral.status]}`}
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${STATUS_CLASS[referral.status]}`}
             >
               {STATUS_LABEL[referral.status]}
             </span>

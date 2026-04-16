@@ -27,7 +27,7 @@ const STATUS_CLASS: Record<ReferralStatus, string> = {
   REQUESTED: "bg-amber-100 text-amber-700",
   CONFIRMED: "bg-teal-100 text-teal-700",
   ACCEPTED:  "bg-teal-100 text-teal-600",
-  COMPLETED: "bg-slate-100 text-slate-500",
+  COMPLETED: "bg-slate-100 text-slate-600",
   REJECTED:  "bg-red-100 text-red-700",
 };
 
@@ -81,7 +81,7 @@ export default function ReceiverPage() {
         <div className="space-y-6">
           {pending.length > 0 && (
             <section>
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
                 처리 필요
               </h2>
               <div className="space-y-3">
@@ -93,7 +93,7 @@ export default function ReceiverPage() {
           )}
           {others.length > 0 && (
             <section>
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
                 처리 완료
               </h2>
               <div className="space-y-3">
@@ -135,14 +135,14 @@ function ReferralCard({ referral }: { referral: Referral }) {
               </CardDescription>
             </div>
             <span
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${STATUS_CLASS[referral.status]}`}
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium shrink-0 ${STATUS_CLASS[referral.status]}`}
             >
               {STATUS_LABEL[referral.status]}
             </span>
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
               <Building2 className="h-3.5 w-3.5" />
               {referral.from_hospital?.name ?? "알 수 없음"}
@@ -158,10 +158,10 @@ function ReferralCard({ referral }: { referral: Referral }) {
             )}
             <div className="flex gap-1 ml-auto">
               {referral.needs_oxygen && (
-                <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-xs">산소</span>
+                <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-sm">산소</span>
               )}
               {referral.needs_isolation && (
-                <span className="px-1.5 py-0.5 rounded bg-orange-50 text-orange-600 text-xs">격리</span>
+                <span className="px-1.5 py-0.5 rounded bg-orange-50 text-orange-600 text-sm">격리</span>
               )}
             </div>
           </div>
@@ -174,9 +174,9 @@ function ReferralCard({ referral }: { referral: Referral }) {
 function EmptyState() {
   return (
     <div className="text-center py-16 border-2 border-dashed rounded-xl">
-      <Inbox className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+      <Inbox className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
       <p className="text-muted-foreground font-medium">수신된 요청이 없습니다</p>
-      <p className="text-sm text-muted-foreground/70 mt-1">
+      <p className="text-sm text-muted-foreground mt-1">
         상급병원에서 회송 요청을 보내면 여기에 표시됩니다
       </p>
     </div>

@@ -33,7 +33,7 @@ export function NotificationBell() {
       >
         <Bell className="h-5 w-5" />
         {count > 0 && (
-          <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+          <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-sm">
             {count > 9 ? "9+" : count}
           </Badge>
         )}
@@ -59,7 +59,7 @@ export function NotificationBell() {
                 {recent.map((r) => (
                   <li key={r.id} className="px-4 py-3">
                     <p className="text-sm font-medium">{r.patient_initial}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-sm text-muted-foreground mt-0.5">
                       {r.from_hospital?.name ?? "—"} ·{" "}
                       <span
                         className={

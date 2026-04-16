@@ -113,7 +113,7 @@ export default function NewReferralPage() {
                 {...register("patient_initial")}
               />
               {errors.patient_initial && (
-                <p className="text-xs text-destructive">
+                <p className="text-sm text-destructive">
                   {errors.patient_initial.message}
                 </p>
               )}
@@ -130,7 +130,7 @@ export default function NewReferralPage() {
                   {...register("age", { valueAsNumber: true })}
                 />
                 {errors.age && (
-                  <p className="text-xs text-destructive">{errors.age.message}</p>
+                  <p className="text-sm text-destructive">{errors.age.message}</p>
                 )}
               </div>
               <div className="space-y-1.5">
@@ -160,7 +160,7 @@ export default function NewReferralPage() {
                 {...register("diagnosis")}
               />
               {errors.diagnosis && (
-                <p className="text-xs text-destructive">
+                <p className="text-sm text-destructive">
                   {errors.diagnosis.message}
                 </p>
               )}
@@ -233,7 +233,7 @@ export default function NewReferralPage() {
                 {...register("preferred_date")}
               />
               {errors.preferred_date && (
-                <p className="text-xs text-destructive">
+                <p className="text-sm text-destructive">
                   {errors.preferred_date.message}
                 </p>
               )}

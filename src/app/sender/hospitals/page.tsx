@@ -133,7 +133,7 @@ function PartnerCard({
           {hospital.tags.length > 0 && (
             <div className="flex gap-1.5">
               {hospital.tags.map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
+                <Badge key={tag} variant="secondary" className="text-sm">
                   {tag}
                 </Badge>
               ))}

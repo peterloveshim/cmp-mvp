@@ -60,7 +60,7 @@ export default function HospitalSelectPage() {
         <div className="space-y-6">
           {/* 상급병원 */}
           <div>
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
               상급종합병원
             </h2>
             <div className="space-y-2">
@@ -72,7 +72,7 @@ export default function HospitalSelectPage() {
 
           {/* 협력병원 */}
           <div>
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
               협력병원
             </h2>
             <div className="space-y-2">
@@ -84,7 +84,7 @@ export default function HospitalSelectPage() {
         </div>
       )}
 
-      <p className="text-center text-xs text-muted-foreground mt-10">
+      <p className="text-center text-sm text-muted-foreground mt-10">
         💡 시연 팁: 탭 2개를 나란히 열고 각각 다른 병원으로 입장하세요
       </p>
     </div>
@@ -122,7 +122,7 @@ function HospitalCard({
                 {hospital.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-xs bg-muted px-1.5 py-0.5 rounded"
+                    className="text-sm bg-muted px-1.5 py-0.5 rounded"
                   >
                     {tag}
                   </span>
@@ -134,7 +134,7 @@ function HospitalCard({
       </CardHeader>
       {hospital.type === "TERTIARY" && (
         <CardContent className="pt-0">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             회송 요청을 등록하고 협력병원의 수용 여부를 확인합니다
           </p>
         </CardContent>

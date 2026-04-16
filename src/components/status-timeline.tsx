@@ -53,24 +53,24 @@ export function StatusTimeline({ status }: StatusTimelineProps) {
             <div className="flex flex-col items-center gap-1">
               <div
                 className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-colors",
+                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-colors",
                   isDone &&
                     "bg-primary border-primary text-primary-foreground",
                   isCurrent &&
                     "bg-primary/10 border-primary text-primary",
                   !isDone &&
                     !isCurrent &&
-                    "bg-muted border-muted-foreground/30 text-muted-foreground",
+                    "bg-muted border-muted-foreground/50 text-muted-foreground",
                 )}
               >
                 {isDone ? "✓" : idx + 1}
               </div>
               <span
                 className={cn(
-                  "text-xs whitespace-nowrap",
+                  "text-sm whitespace-nowrap",
                   isCurrent && "font-semibold text-primary",
                   isDone && "text-muted-foreground",
-                  !isDone && !isCurrent && "text-muted-foreground/60",
+                  !isDone && !isCurrent && "text-muted-foreground",
                 )}
               >
                 {step.label}

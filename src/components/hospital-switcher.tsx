@@ -22,7 +22,7 @@ export function HospitalSwitcher() {
         <Building2 className="h-4 w-4" />
         <span>현재:</span>
         <span className="font-medium text-foreground">{hospital.name}</span>
-        <span className="text-xs px-1.5 py-0.5 rounded bg-muted">
+        <span className="text-sm px-1.5 py-0.5 rounded bg-muted">
           {hospital.type === "TERTIARY" ? "상급" : "협력"}
         </span>
       </div>
