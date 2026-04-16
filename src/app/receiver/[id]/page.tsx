@@ -15,7 +15,6 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -36,9 +35,9 @@ const ADL_LABEL: Record<string, string> = {
 };
 
 const REJECT_REASONS = [
-  { value: "병상 없음",       label: "병상 없음" },
-  { value: "중증도 부적합",   label: "중증도 부적합" },
-  { value: "기타",            label: "기타" },
+  { value: "병상 없음",     label: "병상 없음" },
+  { value: "중증도 부적합", label: "중증도 부적합" },
+  { value: "기타",          label: "기타" },
 ];
 
 const STATUS_CLASS: Record<ReferralStatus, string> = {
@@ -80,9 +79,21 @@ export default function ReferralDetailPage() {
     }
   }, [isLoading, isError, referral, router]);
 
+  // 상세 페이지 진입 시 REQUESTED → CONFIRMED 자동 전환
+  useEffect(() => {
+    if (referral?.status === "REQUESTED") {
+      updateStatus.mutate({ id: referral.id, status: "CONFIRMED" });
+    }
+  // referral.id 기준으로만 실행 (최초 로드 시 1회)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [referral?.id]);
+
   if (!isLoaded || !hospital || isLoading || !referral) return null;
 
-  const isProcessed = referral.status === "ACCEPTED" || referral.status === "REJECTED" || referral.status === "COMPLETED";
+  const isProcessed =
+    referral.status === "ACCEPTED" ||
+    referral.status === "REJECTED" ||
+    referral.status === "COMPLETED";
 
   const handleAccept = async () => {
     await updateStatus.mutateAsync({ id: referral.id, status: "ACCEPTED" });
@@ -100,58 +111,64 @@ export default function ReferralDetailPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* 헤더 */}
-      <div className="mb-6 flex items-center gap-3">
-        <Link
-          href="/receiver"
-          className={buttonVariants({ variant: "ghost", size: "sm" })}
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          목록으로
-        </Link>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold">{referral.patient_initial}</h1>
-            <span
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${STATUS_CLASS[referral.status]}`}
-            >
-              {STATUS_LABEL[referral.status]}
-            </span>
-          </div>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {referral.from_hospital?.name ?? "알 수 없음"} 에서 요청
-            &nbsp;·&nbsp;
-            {new Date(referral.created_at).toLocaleDateString("ko-KR")}
+      {/* ── 헤더 ── */}
+      <div className="-mx-4 mb-8 border-b">
+        <div className="px-6 pt-2 pb-5">
+          <Link
+            href="/receiver"
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            목록으로
+          </Link>
+          <p className="text-muted-foreground text-sm uppercase tracking-widest font-medium mb-2">
+            회송 요청 상세
           </p>
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3 leading-none">
+                <h1 className="text-4xl font-bold tracking-tight text-foreground">
+                  {referral.patient_initial}
+                </h1>
+                <span className={`inline-flex items-center px-2 py-0.5 text-sm font-medium ${STATUS_CLASS[referral.status]}`}>
+                  {STATUS_LABEL[referral.status]}
+                </span>
+              </div>
+              <p className="text-muted-foreground mt-2 text-sm">
+                {referral.from_hospital?.name ?? "알 수 없음"} 에서 요청
+                &nbsp;·&nbsp;
+                {new Date(referral.created_at).toLocaleDateString("ko-KR")}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 상태 타임라인 */}
-      <Card className="mb-4">
-        <CardContent className="pt-5 pb-4">
-          <StatusTimeline status={referral.status} />
-          {referral.status === "REJECTED" && referral.reject_reason && (
-            <p className="mt-3 text-sm text-red-600 flex items-center gap-1.5">
-              <XCircle className="h-4 w-4" />
-              불가 사유: {referral.reject_reason}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      {/* ── 상태 타임라인 ── */}
+      <div className="mb-6 pb-6 border-b">
+        <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+          진행 상태
+        </p>
+        <StatusTimeline status={referral.status} />
+        {referral.status === "REJECTED" && referral.reject_reason && (
+          <p className="mt-3 text-sm text-red-600 flex items-center gap-1.5">
+            <XCircle className="h-4 w-4" />
+            불가 사유: {referral.reject_reason}
+          </p>
+        )}
+      </div>
 
-      {/* 환자 정보 */}
-      <Card className="mb-4">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <User className="h-4 w-4 text-muted-foreground" />
-            환자 정보
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      {/* ── 환자 정보 ── */}
+      <div className="mb-6 pb-6 border-b">
+        <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
+          <User className="h-4 w-4" />
+          환자 정보
+        </p>
+        <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4 text-sm">
             <InfoItem label="이니셜" value={referral.patient_initial} />
-            <InfoItem label="나이" value={`${referral.age}세`} />
-            <InfoItem label="성별" value={referral.gender === "M" ? "남성" : "여성"} />
+            <InfoItem label="나이"   value={`${referral.age}세`} />
+            <InfoItem label="성별"   value={referral.gender === "M" ? "남성" : "여성"} />
           </div>
 
           <Separator />
@@ -209,27 +226,25 @@ export default function ReferralDetailPage() {
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* 요청 병원 */}
-      <Card className="mb-6">
-        <CardContent className="pt-4 pb-4">
-          <div className="flex items-center gap-2 text-sm">
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">요청 병원</span>
-            <span className="font-medium">{referral.from_hospital?.name ?? "알 수 없음"}</span>
-          </div>
-        </CardContent>
-      </Card>
+      {/* ── 요청 병원 ── */}
+      <div className="mb-8 pb-6 border-b">
+        <div className="flex items-center gap-2 text-sm">
+          <Building2 className="h-4 w-4 text-muted-foreground" />
+          <span className="text-muted-foreground">요청 병원</span>
+          <span className="font-medium">{referral.from_hospital?.name ?? "알 수 없음"}</span>
+        </div>
+      </div>
 
-      {/* 수용/불가 버튼 영역 */}
+      {/* ── 수용/불가 버튼 ── */}
       {!isProcessed && (
         <div className="space-y-3">
           {!showRejectForm ? (
             <div className="flex gap-3">
               <Button
-                className="flex-1"
+                className="flex-1 rounded-none"
                 onClick={handleAccept}
                 disabled={updateStatus.isPending}
               >
@@ -238,7 +253,7 @@ export default function ReferralDetailPage() {
               </Button>
               <Button
                 variant="destructive"
-                className="flex-1"
+                className="flex-1 rounded-none"
                 onClick={() => setShowRejectForm(true)}
                 disabled={updateStatus.isPending}
               >
@@ -247,65 +262,63 @@ export default function ReferralDetailPage() {
               </Button>
             </div>
           ) : (
-            <Card className="border-red-200 bg-red-50/50">
-              <CardContent className="pt-4 space-y-3">
-                <p className="text-sm font-medium text-red-700">불가 사유를 선택해주세요</p>
-                <Select
-                  value={rejectReason}
-                  onValueChange={(v) => v && setRejectReason(v)}
+            <div className="border p-4 bg-red-50/50 space-y-3">
+              <p className="text-sm font-medium text-red-700">불가 사유를 선택해주세요</p>
+              <Select
+                value={rejectReason}
+                onValueChange={(v) => v && setRejectReason(v)}
+              >
+                <SelectTrigger className="bg-white rounded-none">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {REJECT_REASONS.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-none"
+                  onClick={() => setShowRejectForm(false)}
+                  disabled={updateStatus.isPending}
                 >
-                  <SelectTrigger className="bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {REJECT_REASONS.map((r) => (
-                      <SelectItem key={r.value} value={r.value}>
-                        {r.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => setShowRejectForm(false)}
-                    disabled={updateStatus.isPending}
-                  >
-                    취소
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    className="flex-1"
-                    onClick={handleReject}
-                    disabled={updateStatus.isPending}
-                  >
-                    {updateStatus.isPending ? "처리 중..." : "불가 확정"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                  취소
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="flex-1 rounded-none"
+                  onClick={handleReject}
+                  disabled={updateStatus.isPending}
+                >
+                  {updateStatus.isPending ? "처리 중..." : "불가 확정"}
+                </Button>
+              </div>
+            </div>
           )}
         </div>
       )}
 
-      {/* 이미 처리된 경우 */}
+      {/* ── 처리 완료 상태 메시지 ── */}
       {isProcessed && referral.status === "ACCEPTED" && (
-        <div className="flex items-center gap-2 p-4 rounded-lg bg-teal-50 text-teal-700 text-sm">
+        <div className="flex items-center gap-2 p-4 bg-teal-50 text-teal-700 text-sm">
           <CheckCircle2 className="h-4 w-4" />
-          <span>수용 완료된 요청입니다.</span>
+          수용 완료된 요청입니다.
         </div>
       )}
       {isProcessed && referral.status === "COMPLETED" && (
-        <div className="flex items-center gap-2 p-4 rounded-lg bg-slate-100 text-slate-600 text-sm">
+        <div className="flex items-center gap-2 p-4 bg-slate-100 text-slate-600 text-sm">
           <CheckCircle2 className="h-4 w-4" />
-          <span>회송이 완료된 요청입니다.</span>
+          회송이 완료된 요청입니다.
         </div>
       )}
       {isProcessed && referral.status === "REJECTED" && (
-        <div className="flex items-center gap-2 p-4 rounded-lg bg-red-50 text-red-700 text-sm">
+        <div className="flex items-center gap-2 p-4 bg-red-50 text-red-700 text-sm">
           <XCircle className="h-4 w-4" />
-          <span>불가 처리된 요청입니다.</span>
+          불가 처리된 요청입니다.
         </div>
       )}
     </div>

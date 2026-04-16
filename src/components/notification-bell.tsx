@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   useReceivedReferrals,
@@ -13,6 +15,12 @@ import { Badge } from "@/components/ui/badge";
 export function NotificationBell() {
   const { hospital } = useCurrentHospital();
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  // 경로 변경 시 드롭다운 닫기
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   const { data: count = 0 } = useUnreadCount(hospital?.id ?? null);
   const { data: referrals = [] } = useReceivedReferrals(hospital?.id ?? null);
@@ -57,20 +65,26 @@ export function NotificationBell() {
             ) : (
               <ul className="divide-y">
                 {recent.map((r) => (
-                  <li key={r.id} className="px-4 py-3">
-                    <p className="text-sm font-medium">{r.patient_initial}</p>
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                      {r.from_hospital?.name ?? "—"} ·{" "}
-                      <span
-                        className={
-                          r.status === "REQUESTED"
-                            ? "text-amber-600"
-                            : "text-muted-foreground"
-                        }
-                      >
-                        {r.status === "REQUESTED" ? "대기중" : r.status}
-                      </span>
-                    </p>
+                  <li key={r.id}>
+                    <Link
+                      href={`/receiver/${r.id}`}
+                      onClick={() => setOpen(false)}
+                      className="block px-4 py-3 hover:bg-muted/40 transition-colors"
+                    >
+                      <p className="text-sm font-medium">{r.patient_initial}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {r.from_hospital?.name ?? "—"} ·{" "}
+                        <span
+                          className={
+                            r.status === "REQUESTED"
+                              ? "text-amber-600"
+                              : "text-muted-foreground"
+                          }
+                        >
+                          {r.status === "REQUESTED" ? "대기중" : r.status}
+                        </span>
+                      </p>
+                    </Link>
                   </li>
                 ))}
               </ul>
