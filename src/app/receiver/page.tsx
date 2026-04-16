@@ -1,16 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Inbox, Building2, CalendarDays } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Inbox, Wind, ShieldAlert } from "lucide-react";
 import { useCurrentHospital } from "@/lib/hooks/use-current-hospital";
 import { useReceivedReferrals } from "@/lib/queries/referrals";
 import type { Referral, ReferralStatus } from "@/types";
@@ -31,11 +24,7 @@ const STATUS_CLASS: Record<ReferralStatus, string> = {
   REJECTED:  "bg-red-100 text-red-700",
 };
 
-const ADL_LABEL: Record<string, string> = {
-  INDEPENDENT: "독립",
-  PARTIAL:     "부분의존",
-  DEPENDENT:   "완전의존",
-};
+const COLS = "grid grid-cols-[5.5rem_1fr_8.5rem_6rem_3rem_5rem] gap-4 items-center";
 
 export default function ReceiverPage() {
   const router = useRouter();
@@ -49,28 +38,65 @@ export default function ReceiverPage() {
     if (isLoaded && hospital?.type === "TERTIARY") router.replace("/sender");
   }, [isLoaded, hospital, router]);
 
-  if (!isLoaded || !hospital) return null;
+  const stats = useMemo(() => ({
+    total:     referrals.length,
+    pending:   referrals.filter((r) => r.status === "REQUESTED").length,
+    accepted:  referrals.filter((r) => r.status === "ACCEPTED").length,
+    completed: referrals.filter((r) => r.status === "COMPLETED").length,
+  }), [referrals]);
 
-  // REQUESTED 우선, 나머지 최신순 (쿼리에서 이미 정렬됨)
-  const pending = referrals.filter((r) => r.status === "REQUESTED");
-  const others  = referrals.filter((r) => r.status !== "REQUESTED");
+  const pending = useMemo(() =>
+    referrals.filter((r) => r.status === "REQUESTED"), [referrals]);
+
+  const others = useMemo(() =>
+    referrals.filter((r) => r.status !== "REQUESTED"), [referrals]);
+
+  if (!isLoaded || !hospital) return null;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-bold">받은 회송 요청</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {hospital.name}으로 수신된 요청 목록
+      {/* ── 헤더 ── */}
+      <div className="-mx-4 mb-8 border-b">
+        <div className="px-6 pt-2 pb-5">
+          <p className="text-muted-foreground text-sm uppercase tracking-widest font-medium mb-2">
+            협력병원 병상 관리
           </p>
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <h1 className="text-4xl font-bold tracking-tight leading-none text-foreground">
+                받은 회송 요청
+              </h1>
+              <p className="text-muted-foreground mt-2 text-sm">{hospital.name}</p>
+            </div>
+            {stats.pending > 0 && (
+              <span className="inline-flex items-center px-3 py-1.5 bg-amber-100 text-amber-700 text-sm font-semibold shrink-0">
+                미처리 {stats.pending}건
+              </span>
+            )}
+          </div>
         </div>
-        {pending.length > 0 && (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-700">
-            미처리 {pending.length}건
-          </span>
-        )}
+
+        {/* 스탯 스트립 */}
+        <div className="border-t grid grid-cols-4 divide-x bg-muted/40">
+          {[
+            { label: "전체 수신", value: stats.total,     color: "text-foreground" },
+            { label: "처리 필요", value: stats.pending,   color: stats.pending   > 0 ? "text-amber-600" : "text-foreground" },
+            { label: "수용됨",   value: stats.accepted,   color: stats.accepted  > 0 ? "text-teal-600"  : "text-foreground" },
+            { label: "완료됨",   value: stats.completed,  color: stats.completed > 0 ? "text-slate-500" : "text-foreground" },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="px-6 py-4">
+              <p className="text-muted-foreground text-sm uppercase tracking-wider font-medium">
+                {label}
+              </p>
+              <p className={`text-3xl font-bold mt-1 tabular-nums ${color}`}>
+                {String(value).padStart(2, "0")}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
 
+      {/* ── 리스트 ── */}
       {isLoading ? (
         <p className="text-sm text-muted-foreground text-center py-12">
           불러오는 중...
@@ -78,30 +104,20 @@ export default function ReceiverPage() {
       ) : referrals.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-10">
           {pending.length > 0 && (
-            <section>
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                처리 필요
-              </h2>
-              <div className="space-y-3">
-                {pending.map((r) => (
-                  <ReferralCard key={r.id} referral={r} />
-                ))}
-              </div>
-            </section>
+            <Section title="처리 필요" count={pending.length}>
+              {pending.map((r) => (
+                <ReferralRow key={r.id} referral={r} />
+              ))}
+            </Section>
           )}
           {others.length > 0 && (
-            <section>
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                처리 완료
-              </h2>
-              <div className="space-y-3">
-                {others.map((r) => (
-                  <ReferralCard key={r.id} referral={r} />
-                ))}
-              </div>
-            </section>
+            <Section title="처리 완료" count={others.length} muted>
+              {others.map((r) => (
+                <ReferralRow key={r.id} referral={r} />
+              ))}
+            </Section>
           )}
         </div>
       )}
@@ -109,72 +125,113 @@ export default function ReceiverPage() {
   );
 }
 
-function ReferralCard({ referral }: { referral: Referral }) {
+/* ── 섹션 ── */
+type SectionProps = {
+  title: string;
+  count: number;
+  muted?: boolean;
+  children: React.ReactNode;
+};
+
+function Section({ title, count, muted = false, children }: SectionProps) {
+  return (
+    <div>
+      <div className="flex items-baseline gap-2.5 border-b pb-2">
+        <h2 className={`text-sm font-semibold uppercase tracking-wider ${muted ? "text-muted-foreground" : "text-foreground"}`}>
+          {title}
+        </h2>
+        <span className={`text-sm font-bold tabular-nums ${muted ? "text-muted-foreground" : "text-primary"}`}>
+          {String(count).padStart(2, "0")}
+        </span>
+      </div>
+
+      {/* 컬럼 헤더 */}
+      <div className={`${COLS} px-3 py-2.5 border-b bg-muted/40`}>
+        {[
+          { key: "ref",      label: "REF",     center: false },
+          { key: "patient",  label: "환자",    center: false },
+          { key: "hospital", label: "요청 병원", center: true },
+          { key: "date",     label: "희망일",  center: true },
+          { key: "flag",     label: "특이",    center: true },
+          { key: "status",   label: "상태",    center: true },
+        ].map(({ key, label, center }) => (
+          <span
+            key={key}
+            className={`text-sm font-semibold uppercase tracking-wider text-muted-foreground ${center ? "text-center" : ""}`}
+          >
+            {label}
+          </span>
+        ))}
+      </div>
+
+      <div className="divide-y">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ── 행 ── */
+function ReferralRow({ referral }: { referral: Referral }) {
+  const refId = `REF-${referral.id.slice(0, 6).toUpperCase()}`;
   const isPending = referral.status === "REQUESTED";
 
   return (
     <Link href={`/receiver/${referral.id}`}>
-      <Card
-        className={`cursor-pointer transition-all group ${
-          isPending
-            ? "hover:border-primary/50 hover:shadow-sm border-amber-200"
-            : "hover:border-border/80 opacity-80"
-        }`}
-      >
-        <CardHeader className="pb-2">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <CardTitle className="text-base flex items-center gap-2">
-                {referral.patient_initial}
-                <span className="text-sm font-normal text-muted-foreground">
-                  {referral.age}세 · {referral.gender === "M" ? "남" : "여"}
-                </span>
-              </CardTitle>
-              <CardDescription className="mt-0.5">
-                {referral.diagnosis}
-              </CardDescription>
-            </div>
-            <span
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium shrink-0 ${STATUS_CLASS[referral.status]}`}
-            >
-              {STATUS_LABEL[referral.status]}
+      <div className={`${COLS} px-3 py-4 transition-colors ${isPending ? "hover:bg-amber-50" : "hover:bg-muted/30 opacity-75"}`}>
+        {/* REF ID */}
+        <span className="text-sm font-mono font-semibold text-foreground leading-none">
+          {refId}
+        </span>
+
+        {/* 환자 정보 */}
+        <div className="min-w-0">
+          <div className="flex items-baseline gap-2">
+            <span className="font-semibold text-foreground">{referral.patient_initial}</span>
+            <span className="text-sm text-muted-foreground">
+              {referral.age}세 · {referral.gender === "M" ? "남" : "여"}
             </span>
           </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Building2 className="h-3.5 w-3.5" />
-              {referral.from_hospital?.name ?? "알 수 없음"}
-            </span>
-            {referral.preferred_date && (
-              <span className="flex items-center gap-1">
-                <CalendarDays className="h-3.5 w-3.5" />
-                희망일: {new Date(referral.preferred_date).toLocaleDateString("ko-KR")}
-              </span>
-            )}
-            {referral.adl && (
-              <span>ADL: {ADL_LABEL[referral.adl]}</span>
-            )}
-            <div className="flex gap-1 ml-auto">
-              {referral.needs_oxygen && (
-                <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-sm">산소</span>
-              )}
-              {referral.needs_isolation && (
-                <span className="px-1.5 py-0.5 rounded bg-orange-50 text-orange-600 text-sm">격리</span>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          <p className="text-sm text-muted-foreground truncate">{referral.diagnosis ?? "—"}</p>
+        </div>
+
+        {/* 요청 병원 */}
+        <div className="text-sm text-muted-foreground text-center truncate">
+          {referral.from_hospital?.name ?? "—"}
+        </div>
+
+        {/* 희망일 */}
+        <div className="text-sm text-muted-foreground text-center">
+          {referral.preferred_date
+            ? new Date(referral.preferred_date).toLocaleDateString("ko-KR", {
+                month: "2-digit",
+                day: "2-digit",
+              })
+            : "—"}
+        </div>
+
+        {/* 특이 아이콘 */}
+        <div className="flex items-center justify-center gap-1">
+          {referral.needs_oxygen    && <Wind        className="h-4 w-4 text-blue-500   shrink-0" />}
+          {referral.needs_isolation && <ShieldAlert className="h-4 w-4 text-orange-500 shrink-0" />}
+        </div>
+
+        {/* 상태 배지 */}
+        <div className="flex justify-center">
+          <span className={`inline-flex items-center px-2 py-0.5 text-sm font-medium ${STATUS_CLASS[referral.status]}`}>
+            {STATUS_LABEL[referral.status]}
+          </span>
+        </div>
+      </div>
     </Link>
   );
 }
 
+/* ── 빈 상태 ── */
 function EmptyState() {
   return (
-    <div className="text-center py-16 border-2 border-dashed rounded-xl">
-      <Inbox className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
+    <div className="text-center py-16 border-t border-b">
+      <Inbox className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
       <p className="text-muted-foreground font-medium">수신된 요청이 없습니다</p>
       <p className="text-sm text-muted-foreground mt-1">
         상급병원에서 회송 요청을 보내면 여기에 표시됩니다
