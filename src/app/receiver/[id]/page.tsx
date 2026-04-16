@@ -1,0 +1,333 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  User,
+  Stethoscope,
+  CalendarDays,
+  Building2,
+  CheckCircle2,
+  XCircle,
+  Wind,
+  ShieldAlert,
+} from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { StatusTimeline } from "@/components/status-timeline";
+import { useCurrentHospital } from "@/lib/hooks/use-current-hospital";
+import { useReferral, useUpdateReferralStatus } from "@/lib/queries/referrals";
+import type { ReferralStatus } from "@/types";
+
+const ADL_LABEL: Record<string, string> = {
+  INDEPENDENT: "독립",
+  PARTIAL:     "부분의존",
+  DEPENDENT:   "완전의존",
+};
+
+const REJECT_REASONS = [
+  { value: "병상 없음",       label: "병상 없음" },
+  { value: "중증도 부적합",   label: "중증도 부적합" },
+  { value: "기타",            label: "기타" },
+];
+
+const STATUS_CLASS: Record<ReferralStatus, string> = {
+  REQUESTED: "bg-amber-100 text-amber-700",
+  CONFIRMED: "bg-teal-100 text-teal-700",
+  ACCEPTED:  "bg-teal-100 text-teal-600",
+  COMPLETED: "bg-slate-100 text-slate-500",
+  REJECTED:  "bg-red-100 text-red-700",
+};
+
+const STATUS_LABEL: Record<ReferralStatus, string> = {
+  REQUESTED: "요청중",
+  CONFIRMED: "확인됨",
+  ACCEPTED:  "수용",
+  COMPLETED: "완료",
+  REJECTED:  "불가",
+};
+
+export default function ReferralDetailPage() {
+  const router = useRouter();
+  const params = useParams();
+  const id = typeof params.id === "string" ? params.id : null;
+
+  const { hospital, isLoaded } = useCurrentHospital();
+  const { data: referral, isLoading, isError } = useReferral(id);
+  const updateStatus = useUpdateReferralStatus();
+
+  const [rejectReason, setRejectReason] = useState<string>(REJECT_REASONS[0].value);
+  const [showRejectForm, setShowRejectForm] = useState(false);
+
+  useEffect(() => {
+    if (isLoaded && !hospital) router.replace("/");
+    if (isLoaded && hospital?.type === "TERTIARY") router.replace("/sender");
+  }, [isLoaded, hospital, router]);
+
+  useEffect(() => {
+    if (!isLoading && (isError || referral === null)) {
+      router.replace("/receiver");
+    }
+  }, [isLoading, isError, referral, router]);
+
+  if (!isLoaded || !hospital || isLoading || !referral) return null;
+
+  const isProcessed = referral.status === "ACCEPTED" || referral.status === "REJECTED" || referral.status === "COMPLETED";
+
+  const handleAccept = async () => {
+    await updateStatus.mutateAsync({ id: referral.id, status: "ACCEPTED" });
+    router.push("/receiver");
+  };
+
+  const handleReject = async () => {
+    await updateStatus.mutateAsync({
+      id: referral.id,
+      status: "REJECTED",
+      rejectReason,
+    });
+    router.push("/receiver");
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      {/* 헤더 */}
+      <div className="mb-6 flex items-center gap-3">
+        <Link
+          href="/receiver"
+          className={buttonVariants({ variant: "ghost", size: "sm" })}
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          목록으로
+        </Link>
+        <div className="flex-1">
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-bold">{referral.patient_initial}</h1>
+            <span
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_CLASS[referral.status]}`}
+            >
+              {STATUS_LABEL[referral.status]}
+            </span>
+          </div>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {referral.from_hospital?.name ?? "알 수 없음"} 에서 요청
+            &nbsp;·&nbsp;
+            {new Date(referral.created_at).toLocaleDateString("ko-KR")}
+          </p>
+        </div>
+      </div>
+
+      {/* 상태 타임라인 */}
+      <Card className="mb-4">
+        <CardContent className="pt-5 pb-4">
+          <StatusTimeline status={referral.status} />
+          {referral.status === "REJECTED" && referral.reject_reason && (
+            <p className="mt-3 text-sm text-red-600 flex items-center gap-1.5">
+              <XCircle className="h-4 w-4" />
+              불가 사유: {referral.reject_reason}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 환자 정보 */}
+      <Card className="mb-4">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <User className="h-4 w-4 text-muted-foreground" />
+            환자 정보
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <InfoItem label="이니셜" value={referral.patient_initial} />
+            <InfoItem label="나이" value={`${referral.age}세`} />
+            <InfoItem label="성별" value={referral.gender === "M" ? "남성" : "여성"} />
+          </div>
+
+          <Separator />
+
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <InfoItem
+              label="주상병"
+              value={referral.diagnosis ?? "—"}
+              icon={<Stethoscope className="h-3.5 w-3.5" />}
+            />
+            <InfoItem
+              label="ADL 점수"
+              value={referral.adl ? ADL_LABEL[referral.adl] : "—"}
+            />
+          </div>
+
+          <Separator />
+
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <Wind className="h-4 w-4 text-blue-500" />
+              <span className="text-muted-foreground">산소 필요</span>
+              <span className={`font-medium ${referral.needs_oxygen ? "text-blue-600" : "text-muted-foreground"}`}>
+                {referral.needs_oxygen ? "필요" : "불필요"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 text-orange-500" />
+              <span className="text-muted-foreground">감염 격리</span>
+              <span className={`font-medium ${referral.needs_isolation ? "text-orange-600" : "text-muted-foreground"}`}>
+                {referral.needs_isolation ? "필요" : "불필요"}
+              </span>
+            </div>
+          </div>
+
+          {referral.preferred_date && (
+            <>
+              <Separator />
+              <div className="flex items-center gap-2 text-sm">
+                <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">희망 회송일</span>
+                <span className="font-medium">
+                  {new Date(referral.preferred_date).toLocaleDateString("ko-KR")}
+                </span>
+              </div>
+            </>
+          )}
+
+          {referral.note && (
+            <>
+              <Separator />
+              <div className="text-sm">
+                <p className="text-muted-foreground mb-1">특이사항</p>
+                <p className="text-foreground">{referral.note}</p>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 요청 병원 */}
+      <Card className="mb-6">
+        <CardContent className="pt-4 pb-4">
+          <div className="flex items-center gap-2 text-sm">
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <span className="text-muted-foreground">요청 병원</span>
+            <span className="font-medium">{referral.from_hospital?.name ?? "알 수 없음"}</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 수용/불가 버튼 영역 */}
+      {!isProcessed && (
+        <div className="space-y-3">
+          {!showRejectForm ? (
+            <div className="flex gap-3">
+              <Button
+                className="flex-1"
+                onClick={handleAccept}
+                disabled={updateStatus.isPending}
+              >
+                <CheckCircle2 className="h-4 w-4 mr-1.5" />
+                수용
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={() => setShowRejectForm(true)}
+                disabled={updateStatus.isPending}
+              >
+                <XCircle className="h-4 w-4 mr-1.5" />
+                불가
+              </Button>
+            </div>
+          ) : (
+            <Card className="border-red-200 bg-red-50/50">
+              <CardContent className="pt-4 space-y-3">
+                <p className="text-sm font-medium text-red-700">불가 사유를 선택해주세요</p>
+                <Select
+                  value={rejectReason}
+                  onValueChange={(v) => v && setRejectReason(v)}
+                >
+                  <SelectTrigger className="bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REJECT_REASONS.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>
+                        {r.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setShowRejectForm(false)}
+                    disabled={updateStatus.isPending}
+                  >
+                    취소
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={handleReject}
+                    disabled={updateStatus.isPending}
+                  >
+                    {updateStatus.isPending ? "처리 중..." : "불가 확정"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* 이미 처리된 경우 */}
+      {isProcessed && referral.status === "ACCEPTED" && (
+        <div className="flex items-center gap-2 p-4 rounded-lg bg-teal-50 text-teal-700 text-sm">
+          <CheckCircle2 className="h-4 w-4" />
+          <span>수용 완료된 요청입니다.</span>
+        </div>
+      )}
+      {isProcessed && referral.status === "COMPLETED" && (
+        <div className="flex items-center gap-2 p-4 rounded-lg bg-slate-100 text-slate-600 text-sm">
+          <CheckCircle2 className="h-4 w-4" />
+          <span>회송이 완료된 요청입니다.</span>
+        </div>
+      )}
+      {isProcessed && referral.status === "REJECTED" && (
+        <div className="flex items-center gap-2 p-4 rounded-lg bg-red-50 text-red-700 text-sm">
+          <XCircle className="h-4 w-4" />
+          <span>불가 처리된 요청입니다.</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InfoItem({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <div>
+      <p className="text-muted-foreground flex items-center gap-1 mb-0.5">
+        {icon}
+        {label}
+      </p>
+      <p className="font-medium">{value}</p>
+    </div>
+  );
+}
