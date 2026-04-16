@@ -104,6 +104,15 @@ export default function SenderPage() {
             : `${hospital_name}이(가) 불가 처리했습니다.`,
           duration: 6000,
         });
+      } else if (
+        curr.status === "CONFIRMED" &&
+        (prevItem.status === "ACCEPTED" || prevItem.status === "REJECTED")
+      ) {
+        // 협력병원이 결정을 취소하고 CONFIRMED로 되돌린 경우
+        toast.warning(`${name} 환자 결정이 취소되었습니다`, {
+          description: `${hospital_name}이(가) 결정을 취소했습니다. 재처리를 기다려 주세요.`,
+          duration: 6000,
+        });
       }
     }
 
