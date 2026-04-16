@@ -1,0 +1,1 @@
+- [No indigo or generic blue](feedback_no_indigo.md) — User wants original, domain-contextual color palettes; no indigo/medical blue defaults
