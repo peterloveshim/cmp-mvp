@@ -43,8 +43,8 @@ globs: ["**/*.tsx", "**/*.css"]
 | 상태 | 색상 | Tailwind 클래스 예시 |
 |---|---|---|
 | `REQUESTED` | 앰버 | `bg-amber-100 text-amber-700` |
-| `CONFIRMED` | primary (틸) | `bg-teal-100 text-teal-700` |
-| `ACCEPTED` | success (틸 600) | `bg-teal-100 text-teal-600` |
+| `CONFIRMED` | 블루 | `bg-blue-100 text-blue-700` |
+| `ACCEPTED` | 틸 | `bg-teal-100 text-teal-700` |
 | `COMPLETED` | 슬레이트 | `bg-slate-100 text-slate-600` |
 | `REJECTED` | destructive (레드) | `bg-red-100 text-red-700` |
 

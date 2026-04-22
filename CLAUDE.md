@@ -26,6 +26,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## Hydration 규칙 (필수)
+
+- `useReducer` / `useState` 초기값에서 `typeof window !== "undefined"`, `sessionStorage`, `localStorage`, `Date.now()`, `Math.random()` 등 **서버/클라이언트가 다른 값**을 절대 사용하지 말 것.
+- 클라이언트 전용 값(브라우저 API, 사용자 locale 등)은 반드시 **`useEffect` 안**에서 읽고 state에 반영한다.
+- 초기 상태는 항상 SSR 결과와 동일하게 고정한다 (예: `{ data: null, isLoaded: false }`).
+- 컴포넌트 작성 시 "서버 렌더 결과 === 클라이언트 첫 렌더 결과"인지 반드시 확인한다.
+
+```ts
+// ❌ Hydration mismatch 유발
+function initState() {
+  return { value: typeof window !== "undefined" ? localStorage.getItem("key") : null };
+}
+
+// ✅ 올바른 패턴
+function initState() {
+  return { value: null, isLoaded: false };  // 항상 동일한 초기값
+}
+useEffect(() => {
+  setState({ value: localStorage.getItem("key"), isLoaded: true });
+}, []);
+```
+
+---
+
 ## 테스트 규칙 (필수)
 
 - **각 Phase 완료 시 반드시 Playwright MCP로 테스트**를 실행한다. 예외 없음.

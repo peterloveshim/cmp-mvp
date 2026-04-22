@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { HospitalSwitcher } from "@/components/hospital-switcher";
@@ -29,7 +30,10 @@ export default function RootLayout({
           <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="max-w-5xl mx-auto flex h-14 items-center justify-between px-4">
               <span className="font-semibold text-sm tracking-tight">
-                CMP <span className="text-muted-foreground font-normal">환자 회송 관리</span>
+                CMP{" "}
+                <span className="text-muted-foreground font-normal">
+                  환자 회송 관리
+                </span>
               </span>
               <div className="flex items-center gap-2">
                 <NotificationBell />
@@ -40,11 +44,10 @@ export default function RootLayout({
 
           {/* 본문 */}
           <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
-            <ErrorBoundary>
-              {children}
-            </ErrorBoundary>
+            <ErrorBoundary>{children}</ErrorBoundary>
           </main>
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
